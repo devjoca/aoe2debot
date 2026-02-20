@@ -1,6 +1,7 @@
-import { buildModeKeyboard, decodeIntent, decodeMode } from "../callbacks";
-import { clampLastCount } from "../parsers";
-import type { CallbackDataContext } from "../types";
+import { decodeIntent, decodeMode } from "../telegram/callbacks";
+import { buildModeKeyboard } from "../telegram/keyboards";
+import { clampLastCount } from "../telegram/parsers";
+import type { CallbackDataContext } from "../telegram/types";
 import { respondWithEloResult } from "./elo";
 import { respondWithLastResult } from "./last";
 

@@ -1,8 +1,8 @@
-import { getMatchDetail, getMatchList } from "../age2";
+import { getMatchDetail, getMatchList } from "../api/matches";
 import { modeLabel, matchTypeForMode, type Mode } from "../constants";
-import { formatLastResponse } from "../formatters";
-import { parseRequestText } from "../parsers";
-import type { BotContext, CommandContext } from "../types";
+import { formatLastResponse } from "../formatters/last";
+import { parseRequestText } from "../telegram/parsers";
+import type { BotContext, CommandContext } from "../telegram/types";
 import { startFlow } from "./flow";
 
 export async function handleLastCommand(ctx: CommandContext): Promise<void> {

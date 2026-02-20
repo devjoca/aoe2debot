@@ -1,8 +1,8 @@
-import { getFullStats } from "../age2";
+import { getFullStats } from "../api/players";
 import { modeLabel, matchTypeForMode, type Mode } from "../constants";
-import { formatEloResponse } from "../formatters";
-import { parseRequestText } from "../parsers";
-import type { BotContext, CommandContext } from "../types";
+import { formatEloResponse } from "../formatters/elo";
+import { parseRequestText } from "../telegram/parsers";
+import type { BotContext, CommandContext } from "../telegram/types";
 import { startFlow } from "./flow";
 
 export async function handleEloCommand(ctx: CommandContext): Promise<void> {

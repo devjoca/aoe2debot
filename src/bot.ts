@@ -1,35 +1,11 @@
 import { Bot } from "grammy";
-import type { UserFromGetMe } from "grammy/types";
-import { buildHelpText } from "./formatters";
-import { handlePickModeCallback, handlePickPlayerCallback } from "./handlers/common";
+import { parseBotInfo } from "./config";
+import { buildHelpText } from "./formatters/help";
+import { handlePickModeCallback, handlePickPlayerCallback } from "./handlers/callbacks";
 import { handleEloCommand } from "./handlers/elo";
 import { startFlow } from "./handlers/flow";
 import { handleLastCommand } from "./handlers/last";
-import { parseMentionRequest } from "./parsers";
-
-function parseBotInfo(botInfo?: string): UserFromGetMe | undefined {
-  if (!botInfo || botInfo.trim() === "") {
-    return undefined;
-  }
-
-  try {
-    const parsed = JSON.parse(botInfo);
-    if (!parsed || typeof parsed !== "object") {
-      console.error("BOT_INFO is not a valid object, ignoring");
-      return undefined;
-    }
-    // Handle full getMe response: {"ok":true,"result":{...}}
-    const info = parsed.result ?? parsed;
-    if (!info.username) {
-      console.error("BOT_INFO is missing 'username' field:", JSON.stringify(info));
-      return undefined;
-    }
-    return info as UserFromGetMe;
-  } catch (error) {
-    console.error("Failed to parse BOT_INFO:", error);
-    return undefined;
-  }
-}
+import { parseMentionRequest } from "./telegram/parsers";
 
 export function createBot(token: string, botInfo?: string) {
   const parsed = parseBotInfo(botInfo);
@@ -58,12 +34,12 @@ export function createBot(token: string, botInfo?: string) {
       return;
     }
 
-    const parsed = parseMentionRequest(ctx.message.text, ctx.me.username);
-    if (!parsed) {
+    const mention = parseMentionRequest(ctx.message.text, ctx.me.username);
+    if (!mention) {
       return;
     }
 
-    await startFlow(ctx, parsed);
+    await startFlow(ctx, mention);
   });
 
   return bot;

@@ -1,4 +1,12 @@
-import { MAX_LAST_COUNT, type ParsedRequest } from "./constants";
+import type { Intent } from "../constants";
+
+export const MAX_LAST_COUNT = 5;
+
+export interface ParsedRequest {
+  intent: Intent;
+  query: string;
+  count: number;
+}
 
 export function clampLastCount(raw: string | undefined): number {
   if (!raw) {

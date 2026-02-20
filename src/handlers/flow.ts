@@ -1,8 +1,12 @@
 import { InlineKeyboard } from "grammy";
-import { getFullStats, searchPlayers, type LeaderboardItem } from "../age2";
-import { buildModeKeyboard, encodePickPlayer } from "../callbacks";
-import { SOLO_MATCH_TYPE, TEAM_MATCH_TYPE, type ParsedRequest } from "../constants";
-import type { BotContext } from "../types";
+import { getFullStats } from "../api/players";
+import type { LeaderboardItem } from "../api/types";
+import { searchPlayers } from "../api/players";
+import { encodePickPlayer } from "../telegram/callbacks";
+import { buildModeKeyboard } from "../telegram/keyboards";
+import type { ParsedRequest } from "../telegram/parsers";
+import { SOLO_MATCH_TYPE, TEAM_MATCH_TYPE } from "../constants";
+import type { BotContext } from "../telegram/types";
 
 async function resolvePlayers(query: string): Promise<LeaderboardItem[]> {
   if (/^\d+$/.test(query)) {
