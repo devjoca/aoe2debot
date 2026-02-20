@@ -1,3 +1,4 @@
+import { getEloHistory } from "../api/insights";
 import { getFullStats } from "../api/players";
 import { modeLabel, matchTypeForMode, type Mode } from "../constants";
 import { formatEloResponse } from "../formatters/elo";
@@ -18,8 +19,15 @@ export async function handleEloCommand(ctx: CommandContext): Promise<void> {
 export async function respondWithEloResult(ctx: BotContext, profileId: number, mode: Mode): Promise<void> {
   const label = modeLabel(mode);
   const matchType = matchTypeForMode(mode);
-  const stats = await getFullStats(profileId, matchType);
+
+  const [stats, eloHistory] = await Promise.all([
+    getFullStats(profileId, matchType),
+    getEloHistory(profileId, matchType),
+  ]);
+
   const name = stats.user?.userName ?? `Player ${profileId}`;
+  const peakElo = eloHistory && eloHistory.length > 0 ? Math.max(...eloHistory.map((p) => p.y)) : undefined;
+
   const text = formatEloResponse({
     name,
     profileId,
@@ -30,6 +38,7 @@ export async function respondWithEloResult(ctx: BotContext, profileId: number, m
     playerStanding: stats.user?.playerStanding,
     currentWinStreak: stats.mpStatList?.currentWinStreak,
     careerStats: stats.careerStats,
+    peakElo,
   });
   await ctx.editMessageText(text, { parse_mode: "HTML" });
 }

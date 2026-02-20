@@ -4,6 +4,7 @@ import { clampLastCount } from "../telegram/parsers";
 import type { CallbackDataContext } from "../telegram/types";
 import { respondWithEloResult } from "./elo";
 import { respondWithLastResult } from "./last";
+import { respondWithTrendResult } from "./trend";
 
 export async function handlePickPlayerCallback(ctx: CallbackDataContext): Promise<void> {
   const parts = ctx.callbackQuery.data.split("|");
@@ -47,6 +48,11 @@ export async function handlePickModeCallback(ctx: CallbackDataContext): Promise<
   try {
     if (intent === "elo") {
       await respondWithEloResult(ctx, profileId, mode);
+      return;
+    }
+
+    if (intent === "trend") {
+      await respondWithTrendResult(ctx, profileId, mode);
       return;
     }
 

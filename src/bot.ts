@@ -5,6 +5,7 @@ import { handlePickModeCallback, handlePickPlayerCallback } from "./handlers/cal
 import { handleEloCommand } from "./handlers/elo";
 import { startFlow } from "./handlers/flow";
 import { handleLastCommand } from "./handlers/last";
+import { handleTrendCommand } from "./handlers/trend";
 import { parseMentionRequest } from "./telegram/parsers";
 
 export function createBot(token: string, botInfo?: string) {
@@ -25,6 +26,7 @@ export function createBot(token: string, botInfo?: string) {
 
   bot.command("elo", handleEloCommand);
   bot.command("last", handleLastCommand);
+  bot.command("trend", handleTrendCommand);
 
   bot.callbackQuery(/^a2\|p\|/, handlePickPlayerCallback);
   bot.callbackQuery(/^a2\|m\|/, handlePickModeCallback);

@@ -1,4 +1,4 @@
-export type Intent = "elo" | "last";
+export type Intent = "elo" | "last" | "trend";
 export type Mode = "team" | "solo";
 
 export const TEAM_MATCH_TYPE = 4;

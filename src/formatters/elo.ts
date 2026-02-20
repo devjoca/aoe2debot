@@ -63,10 +63,11 @@ export interface EloResponseParams {
   playerStanding?: number;
   currentWinStreak?: number;
   careerStats?: CareerStats;
+  peakElo?: number;
 }
 
 export function formatEloResponse(params: EloResponseParams): string {
-  const { name, profileId, modeLabelValue, elo, totalMatches, totalWins, playerStanding, currentWinStreak, careerStats } = params;
+  const { name, profileId, modeLabelValue, elo, totalMatches, totalWins, playerStanding, currentWinStreak, careerStats, peakElo } = params;
   const safeName = escapeHtml(name);
   const safeMode = escapeHtml(modeLabelValue);
   const ladderEmoji = modeEmoji(modeLabelValue);
@@ -87,7 +88,7 @@ export function formatEloResponse(params: EloResponseParams): string {
   const lines = [
     `👤 <b>${safeName}</b> <code>(${profileId})</code>`,
     `${ladderEmoji} <b>${safeMode}</b>`,
-    `📈 <b>${elo}</b> ELO${standing}`,
+    `📈 <b>${elo}</b> ELO${standing}${peakElo !== undefined ? ` • 🏔️ Peak: ${peakElo}` : ""}`,
     `📊 <b>${totalWins}-${losses}</b> • ${totalMatches} games • ${winRate}% WR${streak}`,
   ];
 
