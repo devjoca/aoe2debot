@@ -45,7 +45,11 @@ export function parseRequestText(input: string): ParsedRequest | null {
   return { intent, query, count: clampLastCount(hasCount ? maybeCount : undefined) };
 }
 
-export function parseMentionRequest(text: string, botUsername: string): ParsedRequest | null {
+export function parseMentionRequest(text: string, botUsername: string | undefined): ParsedRequest | null {
+  if (!botUsername) {
+    return null;
+  }
+
   const mentionPrefix = `@${botUsername.toLowerCase()}`;
   const trimmed = text.trim();
   if (!trimmed.toLowerCase().startsWith(mentionPrefix)) {
