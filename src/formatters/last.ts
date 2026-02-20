@@ -1,5 +1,5 @@
 import type { MatchDetailResponse } from "../api/types";
-import { escapeHtml, formatDate, modeEmoji, resultEmoji } from "./shared";
+import { escapeHtml, timeAgo, modeEmoji, resultEmoji } from "./shared";
 
 function formatTeams(detail: MatchDetailResponse): string[] {
   const byTeam = new Map<number, string[]>();
@@ -37,7 +37,7 @@ export function formatLastResponse(name: string, profileId: number, modeLabelVal
 
   for (const detail of details) {
     const summary = detail.matchSummary;
-    const date = formatDate(summary?.dateTime ?? "");
+    const date = timeAgo(summary?.dateTime ?? "");
     const map = escapeHtml(summary?.mapType ?? "Unknown map");
     const duration = summary?.matchLength !== undefined ? `${Math.round(summary.matchLength)}m` : "?m";
     const self = (detail.playerList ?? []).find((player) => player.userId === String(profileId));

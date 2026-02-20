@@ -1,5 +1,5 @@
-import type { CareerStats } from "../api/types";
-import { escapeHtml, formatNumber, formatWinRate, modeEmoji } from "./shared";
+import type { CareerStats, MatchDetailResponse } from "../api/types";
+import { escapeHtml, formatNumber, formatWinRate, modeEmoji, resultEmoji, timeAgo } from "./shared";
 
 function formatStanding(playerStanding: number | undefined): string {
   if (playerStanding === undefined || playerStanding <= 0) {
@@ -53,6 +53,16 @@ function formatCareerStats(career: CareerStats): string[] {
   return lines;
 }
 
+function formatLastMatch(detail: MatchDetailResponse, profileId: number): string {
+  const summary = detail.matchSummary;
+  const self = (detail.playerList ?? []).find((p) => p.userId === String(profileId));
+  const result = self?.winLoss ?? "Unknown";
+  const map = escapeHtml(summary?.mapType ?? "Unknown map");
+  const duration = summary?.matchLength !== undefined ? `${Math.round(summary.matchLength)}m` : "?m";
+  const date = timeAgo(summary?.dateTime ?? "");
+  return `🗺️ Last: ${resultEmoji(result)} ${escapeHtml(result)} • ${map} • ${duration} • ${date}`;
+}
+
 export interface EloResponseParams {
   name: string;
   profileId: number;
@@ -64,10 +74,11 @@ export interface EloResponseParams {
   currentWinStreak?: number;
   careerStats?: CareerStats;
   peakElo?: number;
+  lastMatch?: MatchDetailResponse;
 }
 
 export function formatEloResponse(params: EloResponseParams): string {
-  const { name, profileId, modeLabelValue, elo, totalMatches, totalWins, playerStanding, currentWinStreak, careerStats, peakElo } = params;
+  const { name, profileId, modeLabelValue, elo, totalMatches, totalWins, playerStanding, currentWinStreak, careerStats, peakElo, lastMatch } = params;
   const safeName = escapeHtml(name);
   const safeMode = escapeHtml(modeLabelValue);
   const ladderEmoji = modeEmoji(modeLabelValue);
@@ -91,6 +102,10 @@ export function formatEloResponse(params: EloResponseParams): string {
     `📈 <b>${elo}</b> ELO${standing}${peakElo !== undefined ? ` • 🏔️ Peak: ${peakElo}` : ""}`,
     `📊 <b>${totalWins}-${losses}</b> • ${totalMatches} games • ${winRate}% WR${streak}`,
   ];
+
+  if (lastMatch) {
+    lines.push(formatLastMatch(lastMatch, profileId));
+  }
 
   if (careerStats) {
     lines.push(...formatCareerStats(careerStats));
