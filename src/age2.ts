@@ -12,16 +12,33 @@ interface LeaderboardResponse {
   items?: LeaderboardItem[];
 }
 
+export interface CareerStats {
+  unitsKilled?: number;
+  unitsLost?: number;
+  buildingsRaised?: number;
+  buildingsLost?: number;
+  wondersBuilt?: number;
+  castlesBuilt?: number;
+  trebsBuilt?: number;
+  farmsBuilt?: number;
+  highScoreMilitary?: number;
+  highScoreEconomy?: number;
+  highScoreTechnology?: number;
+}
+
 interface FullStatsResponse {
   user?: {
     profileId?: number;
     userName?: string;
     elo?: number | null;
+    playerStanding?: number;
   };
   mpStatList?: {
     totalMatches?: number;
     totalWins?: number;
+    currentWinStreak?: number;
   };
+  careerStats?: CareerStats;
 }
 
 interface MatchListResponse {

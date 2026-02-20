@@ -1,5 +1,6 @@
 import "dotenv/config";
 import { createBot } from "./bot";
+import { setCommands } from "./commands";
 
 const token = process.env.BOT_TOKEN;
 if (!token) {
@@ -10,7 +11,8 @@ if (!token) {
 const bot = createBot(token);
 
 bot.start({
-  onStart: (botInfo) => {
+  onStart: async (botInfo) => {
+    await setCommands(bot);
     console.log(`🤖 Bot @${botInfo.username} running with long polling...`);
   },
 });

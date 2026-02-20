@@ -20,8 +20,16 @@ export async function respondWithEloResult(ctx: BotContext, profileId: number, m
   const matchType = matchTypeForMode(mode);
   const stats = await getFullStats(profileId, matchType);
   const name = stats.user?.userName ?? `Player ${profileId}`;
-  const totalMatches = stats.mpStatList?.totalMatches ?? 0;
-  const totalWins = stats.mpStatList?.totalWins ?? 0;
-  const text = formatEloResponse(name, profileId, label, stats.user?.elo ?? null, totalMatches, totalWins);
+  const text = formatEloResponse({
+    name,
+    profileId,
+    modeLabelValue: label,
+    elo: stats.user?.elo ?? null,
+    totalMatches: stats.mpStatList?.totalMatches ?? 0,
+    totalWins: stats.mpStatList?.totalWins ?? 0,
+    playerStanding: stats.user?.playerStanding,
+    currentWinStreak: stats.mpStatList?.currentWinStreak,
+    careerStats: stats.careerStats,
+  });
   await ctx.editMessageText(text, { parse_mode: "HTML" });
 }

@@ -50,6 +50,17 @@ npm run dev
 
 This starts the bot using `src/dev.ts`.
 
+## Register Telegram command menus
+
+```bash
+npm run setup:commands
+```
+
+This updates Telegram's command list scopes so the `/` menu shows:
+
+- Private chats: `/start`, `/help`, `/elo`, `/last`
+- Group chats: `/elo`, `/last`
+
 ## Typecheck and tests
 
 ```bash

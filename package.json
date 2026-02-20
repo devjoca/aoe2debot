@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npx tsx src/dev.ts",
+    "setup:commands": "npx tsx src/setup.ts",
     "dev:worker": "wrangler dev",
     "deploy": "wrangler deploy",
     "test": "vitest",
