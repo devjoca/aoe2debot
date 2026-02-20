@@ -127,7 +127,7 @@ export async function getMatchList(profileId: number, matchType: MatchType, coun
     sortColumn: "dateTime",
     sortDirection: "DESC",
     page: 1,
-    recordCount: count,
+    count,
     matchType: String(matchType),
   });
 
