@@ -9,6 +9,7 @@ export async function postAge2<T>(path: string, payload: unknown): Promise<T | n
       Referer: "https://www.ageofempires.com/",
     },
     body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(8000),
   });
 
   if (response.status === 204) {

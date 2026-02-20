@@ -17,8 +17,17 @@ export function createBot(token: string, botInfo?: string) {
     ...(parsed ? { botInfo: parsed } : {}),
   });
 
-  bot.catch((err) => {
+  bot.catch(async (err) => {
     console.error("Bot error:", err.message);
+    const isTimeout = err.message?.includes("timed out") || err.message?.includes("abort");
+    const text = isTimeout
+      ? "⏳ The AoE2 API is taking too long to respond. Please try again later."
+      : "⚠️ Something went wrong. Please try again later.";
+    try {
+      await err.ctx.reply(text);
+    } catch {
+      // best-effort reply
+    }
   });
 
   bot.command("start", (ctx) => ctx.reply(`Welcome! Aoede2Bot is running 🎵\n\n${buildHelpText(ctx.me.username ?? "aoede2bot")}`));
