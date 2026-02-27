@@ -1,14 +1,20 @@
 import type { MatchDetailResponse } from "../api/types";
 import { escapeHtml, timeAgo, modeEmoji, resultEmoji } from "./shared";
 
-function formatTeams(detail: MatchDetailResponse): string[] {
+function formatPlayer(player: NonNullable<MatchDetailResponse["playerList"]>[number], eloMap: Map<string, number | null>): string {
+  const name = player.userName ?? "Unknown";
+  const civ = player.civName ?? "Unknown civ";
+  const elo = eloMap.get(player.userId ?? "");
+  const eloSuffix = elo != null ? ` ${elo}` : "";
+  return `${name} (${civ})${eloSuffix}`;
+}
+
+function formatTeams(detail: MatchDetailResponse, eloMap: Map<string, number | null>): string[] {
   const byTeam = new Map<number, string[]>();
   for (const player of detail.playerList ?? []) {
     const team = player.team ?? 0;
-    const name = player.userName ?? "Unknown";
-    const civ = player.civName ?? "Unknown civ";
     const existing = byTeam.get(team) ?? [];
-    existing.push(`${name} (${civ})`);
+    existing.push(formatPlayer(player, eloMap));
     byTeam.set(team, existing);
   }
 
@@ -17,7 +23,7 @@ function formatTeams(detail: MatchDetailResponse): string[] {
     .map(([, players], index) => `${index === 0 ? "🔹" : "🔸"} ${players.join(", ")}`);
 }
 
-export function formatLastResponse(name: string, profileId: number, modeLabelValue: string, details: MatchDetailResponse[]): string {
+export function formatLastResponse(name: string, profileId: number, modeLabelValue: string, details: MatchDetailResponse[], eloMap: Map<string, number | null>): string {
   const safeName = escapeHtml(name);
   const safeMode = escapeHtml(modeLabelValue);
   const ladderEmoji = modeEmoji(modeLabelValue);
@@ -46,7 +52,7 @@ export function formatLastResponse(name: string, profileId: number, modeLabelVal
 
     chunks.push("");
     chunks.push(`${resultEmoji(result)} <b>${safeResult}</b> • ${map} • ${duration} • ${date}`);
-    chunks.push(...formatTeams(detail).map((line) => `  ${escapeHtml(line)}`));
+    chunks.push(...formatTeams(detail, eloMap).map((line) => `  ${escapeHtml(line)}`));
   }
 
   return chunks.join("\n");
