@@ -3,6 +3,7 @@ import type { Intent, Mode } from "../constants";
 function encodeIntentCode(intent: Intent): string {
   if (intent === "elo") return "e";
   if (intent === "last") return "l";
+  if (intent === "civs") return "c";
   return "t";
 }
 
@@ -19,6 +20,7 @@ export function decodeIntent(code: string): Intent | null {
   if (code === "e") return "elo";
   if (code === "l") return "last";
   if (code === "t") return "trend";
+  if (code === "c") return "civs";
   return null;
 }
 

@@ -2,6 +2,7 @@ import { decodeIntent, decodeMode } from "../telegram/callbacks";
 import { buildModeKeyboard } from "../telegram/keyboards";
 import { clampLastCount } from "../telegram/parsers";
 import type { CallbackDataContext } from "../telegram/types";
+import { respondWithCivsResult } from "./civs";
 import { respondWithEloResult } from "./elo";
 import { respondWithLastResult } from "./last";
 import { respondWithTrendResult } from "./trend";
@@ -53,6 +54,11 @@ export async function handlePickModeCallback(ctx: CallbackDataContext): Promise<
 
     if (intent === "trend") {
       await respondWithTrendResult(ctx, profileId, mode);
+      return;
+    }
+
+    if (intent === "civs") {
+      await respondWithCivsResult(ctx, profileId, mode);
       return;
     }
 

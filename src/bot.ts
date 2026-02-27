@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import { parseBotInfo } from "./config";
 import { buildHelpText } from "./formatters/help";
 import { handlePickModeCallback, handlePickPlayerCallback } from "./handlers/callbacks";
+import { handleCivsCommand } from "./handlers/civs";
 import { handleEloCommand } from "./handlers/elo";
 import { startFlow } from "./handlers/flow";
 import { handleLastCommand } from "./handlers/last";
@@ -36,6 +37,7 @@ export function createBot(token: string, botInfo?: string) {
   bot.command("elo", handleEloCommand);
   bot.command("last", handleLastCommand);
   bot.command("trend", handleTrendCommand);
+  bot.command("civs", handleCivsCommand);
 
   bot.callbackQuery(/^a2\|p\|/, handlePickPlayerCallback);
   bot.callbackQuery(/^a2\|m\|/, handlePickModeCallback);

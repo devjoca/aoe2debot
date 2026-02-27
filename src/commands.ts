@@ -6,12 +6,14 @@ const privateCommands = [
   { command: "elo", description: "Show ELO for a player" },
   { command: "last", description: "Show recent matches" },
   { command: "trend", description: "Show ELO trend chart" },
+  { command: "civs", description: "Show civ preferences" },
 ] as const;
 
 const groupCommands = [
   { command: "elo", description: "Show ELO for a player" },
   { command: "last", description: "Show recent matches" },
   { command: "trend", description: "Show ELO trend chart" },
+  { command: "civs", description: "Show civ preferences" },
 ] as const;
 
 export async function setCommands(bot: Bot) {

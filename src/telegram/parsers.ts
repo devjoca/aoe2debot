@@ -29,11 +29,11 @@ export function parseRequestText(input: string): ParsedRequest | null {
 
   const tokens = trimmed.split(/\s+/);
   const intent = tokens[0]?.toLowerCase();
-  if (intent !== "elo" && intent !== "last" && intent !== "trend") {
+  if (intent !== "elo" && intent !== "last" && intent !== "trend" && intent !== "civs") {
     return null;
   }
 
-  if (intent === "elo" || intent === "trend") {
+  if (intent === "elo" || intent === "trend" || intent === "civs") {
     const query = tokens.slice(1).join(" ").trim();
     if (!query) {
       return null;
