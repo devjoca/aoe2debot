@@ -9,7 +9,8 @@ import { respondWithLastResult } from "./last";
 import { respondWithTrendResult } from "./trend";
 
 export interface InsightConfig {
-  ai?: Ai;
+  openrouterKey?: string;
+  openrouterModel?: string;
   waitUntil?: (p: Promise<unknown>) => void;
 }
 
@@ -72,9 +73,9 @@ export function createHandlePickModeCallback(config: InsightConfig) {
       return;
     }
 
-    if (formattedText && config.ai) {
+    if (formattedText && config.openrouterKey && config.openrouterModel) {
       console.log(`[AI insight] sending for profile ${profileId}, mode ${mode}`);
-      const insightPromise = sendInsight(ctx, formattedText, config.ai).catch((err) => {
+      const insightPromise = sendInsight(ctx, formattedText, config.openrouterKey, config.openrouterModel).catch((err) => {
         console.error("[AI insight] failed:", err);
       });
       if (config.waitUntil) {
@@ -83,7 +84,8 @@ export function createHandlePickModeCallback(config: InsightConfig) {
     } else {
       console.log("[AI insight] skipped —", {
         hasText: Boolean(formattedText),
-        hasAi: Boolean(config.ai),
+        hasKey: Boolean(config.openrouterKey),
+        hasModel: Boolean(config.openrouterModel),
       });
     }
   };

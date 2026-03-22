@@ -4,7 +4,8 @@ import { createBot } from "./bot";
 export interface Env {
   BOT_TOKEN: string;
   BOT_INFO: string;
-  AI: Ai;
+  OPENROUTER_KEY: string;
+  OPENROUTER_MODEL: string;
 }
 
 export default {
@@ -15,8 +16,9 @@ export default {
     }
 
     const bot = createBot(env.BOT_TOKEN, env.BOT_INFO, {
-      ai: env.AI,
-      waitUntil: (p) => ctx.waitUntil(p),
+      openrouterKey: env.OPENROUTER_KEY,
+      openrouterModel: env.OPENROUTER_MODEL,
+      waitUntil: (p: Promise<unknown>) => ctx.waitUntil(p),
     });
     return webhookCallback(bot, "cloudflare-mod")(request);
   },

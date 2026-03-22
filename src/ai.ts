@@ -19,11 +19,13 @@ EJEMPLOS DE TONO:
 - "Este jugador tiene más ELO que un chifa en Miraflores. Pero ojo, que hasta el mejor chifa tiene sus días de arroz frío."`;
 
 const MAX_STATS_LENGTH = 500;
+const FETCH_TIMEOUT_MS = 15_000;
 
 export async function sendInsight(
   ctx: BotContext,
   formattedText: string,
-  ai: Ai,
+  key: string,
+  model: string,
 ): Promise<void> {
   const statsText = formattedText
     .replace(/<[^>]+>/g, "")
@@ -35,16 +37,38 @@ export async function sendInsight(
     .slice(0, MAX_STATS_LENGTH);
 
   try {
-    console.log("[AI insight] calling Workers AI...");
-    const response = await ai.run("@cf/meta/llama-3.1-8b-instruct" as keyof AiModels, {
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: statsText },
-      ],
-      stream: false,
+    console.log("[AI insight] fetching OpenRouter...");
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://aoede2bot.jpereyraleon.workers.dev",
+        "X-Title": "aoede2bot",
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: statsText },
+        ],
+        max_tokens: 150,
+        stream: false,
+      }),
     });
 
-    const text = (response as { response?: string }).response?.trim();
+    if (!response.ok) {
+      const body = await response.text().catch(() => "unknown");
+      console.error(`[AI insight] OpenRouter error ${response.status}:`, body.slice(0, 300));
+      return;
+    }
+
+    const json = (await response.json()) as {
+      choices?: { message?: { content?: string } }[];
+    };
+    const text = json.choices?.[0]?.message?.content?.trim();
+
     if (!text) {
       console.log("[AI insight] empty response");
       return;
