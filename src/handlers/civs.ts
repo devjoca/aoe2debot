@@ -18,7 +18,7 @@ export async function handleCivsCommand(ctx: CommandContext): Promise<void> {
   await startFlow(ctx, request);
 }
 
-export async function respondWithCivsResult(ctx: BotContext, profileId: number, mode: Mode): Promise<void> {
+export async function respondWithCivsResult(ctx: BotContext, profileId: number, mode: Mode): Promise<string> {
   const label = modeLabel(mode);
   const matchType = matchTypeForMode(mode);
 
@@ -31,4 +31,5 @@ export async function respondWithCivsResult(ctx: BotContext, profileId: number, 
   const matches = matchList.matchList ?? [];
   const text = formatCivsResponse(name, profileId, label, matches);
   await ctx.editMessageText(text, { parse_mode: "HTML" });
+  return text;
 }

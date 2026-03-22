@@ -1,22 +1,33 @@
 import { Bot } from "grammy";
+import { autoRetry } from "@grammyjs/auto-retry";
+import { stream } from "@grammyjs/stream";
 import { parseBotInfo } from "./config";
 import { buildHelpText } from "./formatters/help";
-import { handlePickModeCallback, handlePickPlayerCallback } from "./handlers/callbacks";
+import { createHandlePickModeCallback, createHandlePickPlayerCallback } from "./handlers/callbacks";
 import { handleCivsCommand } from "./handlers/civs";
 import { handleEloCommand } from "./handlers/elo";
 import { startFlow } from "./handlers/flow";
 import { handleLastCommand } from "./handlers/last";
 import { handleTrendCommand } from "./handlers/trend";
 import { parseMentionRequest } from "./telegram/parsers";
+import type { BotContext } from "./telegram/types";
 
-export function createBot(token: string, botInfo?: string) {
+export interface BotConfig {
+  openrouterKey?: string;
+  openrouterModel?: string;
+}
+
+export function createBot(token: string, botInfo?: string, config: BotConfig = {}) {
   const parsed = parseBotInfo(botInfo);
   if (!parsed) {
     console.error("BOT_INFO is missing or invalid — commands in groups will fail. Run: curl https://api.telegram.org/bot<TOKEN>/getMe and set the result as BOT_INFO secret.");
   }
-  const bot = new Bot(token, {
+  const bot = new Bot<BotContext>(token, {
     ...(parsed ? { botInfo: parsed } : {}),
   });
+
+  bot.api.config.use(autoRetry());
+  bot.use(stream());
 
   bot.catch(async (err) => {
     console.error("Bot error:", err.message);
@@ -39,8 +50,8 @@ export function createBot(token: string, botInfo?: string) {
   bot.command("trend", handleTrendCommand);
   bot.command("civs", handleCivsCommand);
 
-  bot.callbackQuery(/^a2\|p\|/, handlePickPlayerCallback);
-  bot.callbackQuery(/^a2\|m\|/, handlePickModeCallback);
+  bot.callbackQuery(/^a2\|p\|/, createHandlePickPlayerCallback(config));
+  bot.callbackQuery(/^a2\|m\|/, createHandlePickModeCallback(config));
 
   bot.on("message:text", async (ctx) => {
     if (!ctx.me.username) {

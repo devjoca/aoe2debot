@@ -37,7 +37,7 @@ async function fetchEloMap(playerIds: number[]): Promise<Map<string, number | nu
   return new Map(results);
 }
 
-export async function respondWithLastResult(ctx: BotContext, profileId: number, count: number, mode: Mode): Promise<void> {
+export async function respondWithLastResult(ctx: BotContext, profileId: number, count: number, mode: Mode): Promise<string> {
   const label = modeLabel(mode);
   const matchType = matchTypeForMode(mode);
   const matchList = await getMatchList(profileId, matchType, count);
@@ -55,4 +55,5 @@ export async function respondWithLastResult(ctx: BotContext, profileId: number, 
   const name = details[0]?.playerList?.find((player) => player.userId === String(profileId))?.userName ?? `Player ${profileId}`;
   const text = formatLastResponse(name, profileId, label, details, eloMap);
   await ctx.editMessageText(text, { parse_mode: "HTML" });
+  return text;
 }

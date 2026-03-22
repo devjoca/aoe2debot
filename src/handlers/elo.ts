@@ -17,7 +17,7 @@ export async function handleEloCommand(ctx: CommandContext): Promise<void> {
   await startFlow(ctx, request);
 }
 
-export async function respondWithEloResult(ctx: BotContext, profileId: number, mode: Mode): Promise<void> {
+export async function respondWithEloResult(ctx: BotContext, profileId: number, mode: Mode): Promise<string> {
   const label = modeLabel(mode);
   const matchType = matchTypeForMode(mode);
 
@@ -47,4 +47,5 @@ export async function respondWithEloResult(ctx: BotContext, profileId: number, m
     lastMatch,
   });
   await ctx.editMessageText(text, { parse_mode: "HTML" });
+  return text;
 }

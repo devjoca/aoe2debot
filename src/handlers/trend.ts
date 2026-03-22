@@ -17,7 +17,7 @@ export async function handleTrendCommand(ctx: CommandContext): Promise<void> {
   await startFlow(ctx, request);
 }
 
-export async function respondWithTrendResult(ctx: BotContext, profileId: number, mode: Mode): Promise<void> {
+export async function respondWithTrendResult(ctx: BotContext, profileId: number, mode: Mode): Promise<string> {
   const label = modeLabel(mode);
   const matchType = matchTypeForMode(mode);
 
@@ -29,14 +29,16 @@ export async function respondWithTrendResult(ctx: BotContext, profileId: number,
   const name = stats.user?.userName ?? `Player ${profileId}`;
 
   if (!eloHistory || eloHistory.length < 2) {
-    await ctx.editMessageText(`📈 No ELO history available for ${name} (${label}).`);
-    return;
+    const msg = `📈 No ELO history available for ${name} (${label}).`;
+    await ctx.editMessageText(msg);
+    return msg;
   }
 
   const chartImage = await buildEloChart(name, label, eloHistory);
   if (!chartImage) {
-    await ctx.editMessageText(`📈 Not enough recent data to chart for ${name} (${label}).`);
-    return;
+    const msg = `📈 Not enough recent data to chart for ${name} (${label}).`;
+    await ctx.editMessageText(msg);
+    return msg;
   }
 
   const currentElo = stats.user?.elo;
@@ -48,6 +50,8 @@ export async function respondWithTrendResult(ctx: BotContext, profileId: number,
     captionParts.push(`Peak: ${peak}`);
   }
 
+  const caption = captionParts.join("\n");
+
   // Delete the "pick ladder" message before sending the photo
   try {
     await ctx.deleteMessage();
@@ -55,7 +59,6 @@ export async function respondWithTrendResult(ctx: BotContext, profileId: number,
     // Ignore if we can't delete (e.g. in groups without permission)
   }
 
-  await ctx.replyWithPhoto(new InputFile(chartImage, "trend.png"), {
-    caption: captionParts.join("\n"),
-  });
+  await ctx.replyWithPhoto(new InputFile(chartImage, "trend.png"), { caption });
+  return caption;
 }

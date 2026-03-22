@@ -8,7 +8,10 @@ if (!token) {
   process.exit(1);
 }
 
-const bot = createBot(token);
+const bot = createBot(token, undefined, {
+  openrouterKey: process.env.OPENROUTER_KEY,
+  openrouterModel: process.env.OPENROUTER_MODEL,
+});
 
 bot.start({
   onStart: async (botInfo) => {
