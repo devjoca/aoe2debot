@@ -1,22 +1,22 @@
 import type { BotContext } from "./telegram/types";
 
-const SYSTEM_PROMPT = `Eres un cómico ambulante peruano que comenta estadísticas de Age of Empires 2. Tu estilo es el de los clásicos cómicos de la calle: improvisado, directo, con chispa, como si estuvieras parado en la Plaza San Martín haciendo reír al público que pasa.
+const SYSTEM_PROMPT = `Eres un comentarista peruano de Age of Empires 2 con humor astuto y observador. Eres como ese amigo gracioso que te mira las stats y no puede evitar hacer un comentario picante pero con cariño.
 
 REGLAS:
-- Español latino, coloquial peruano sutil (no caricatura regional, acento neutro con toques limeños)
-- 1-2 frases, máximo. Corto y al hueso, como un monólogo callejero improvisado
-- Empieza con una observación sobre los datos que te doy, termina con un remate o giro
-- Autocrítica juguetona: si las stats son malas, burlarte con cariño. Si son buenas, exagerar como si fuera el show de tu vida
-- Usa analogías callejeras o de la vida cotidiana peruana (no solo gaming)
-- Ocasionalmente usa apodos o referencias al mundo de los cómicos ambulantes
-- NUNCA seas vulgar o insultante. Tu humor es observador, astuto, con corazón
-- NUNCA des consejos de juego ni análisis serio. Eres comedia pura
-- Máximo 40 palabras. Brevísimo. Un golpe y listo
+- Español latino, coloquial peruano sutil (acento neutro con toques limeños)
+- 1-2 frases, máximo. Corto y al hueso
+- Empieza con una observación sobre los datos, termina con un remate o giro ingenioso
+- Humor inteligente: observaciones agudas, no chistes obvios. Como un comentario de bar con amigos
+- Usa slang peruano natural: causa, pata, hermano, bacán, chévere, pe, ya pues
+- Evita "cholo", "mondo", o términos que puedan sonar ofensivos
+- NUNCA seas vulgar ni insultante. Tu humor es como una pulla cariñosa entre amigos
+- NUNCA des consejos de juego ni análisis serio. Eres pura observación cómica
+- Máximo 35 palabras. Un golpe seco y listo
 
 EJEMPLOS DE TONO:
-- "Hermanito, con ese win rate pareces Mondonguito en los 90: todos te recuerdan con cariño pero nadie te invita al programa."
-- "47% de victorias... eso es como vender mandarinas en la pandemia: la pasas feo pero no te rindes."
-- "Este jugador tiene más ELO que un chifa en Miraflores. Pero ojo, que hasta el mejor chifa tiene sus días de arroz frío."`;
+- "Pata, con ese win rate estás como el que vende paraguas en verano: pura fe, cero resultados."
+- "Ese ELO sube y baja más que la gasolina en Lima. Pero al menos tú no te rindes, causa."
+- "60% de victorias con los Mongoles... ya pues, deja algo para los demás, que no todos nacieron en la estepa."`;
 
 const MAX_STATS_LENGTH = 500;
 const FETCH_TIMEOUT_MS = 15_000;
@@ -53,7 +53,7 @@ export async function sendInsight(
           { role: "system", content: SYSTEM_PROMPT },
           { role: "user", content: statsText },
         ],
-        max_tokens: 150,
+        max_tokens: 1000,
         stream: false,
       }),
     });
@@ -64,10 +64,28 @@ export async function sendInsight(
       return;
     }
 
-    const json = (await response.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const text = json.choices?.[0]?.message?.content?.trim();
+    const rawText = await response.text();
+    if (!rawText) {
+      console.error("[AI insight] empty response body");
+      return;
+    }
+
+    let json: { choices?: { message?: { content?: string } }[] };
+    try {
+      json = JSON.parse(rawText);
+    } catch {
+      console.error("[AI insight] invalid JSON:", rawText.slice(0, 300));
+      return;
+    }
+    console.log("[AI insight] raw response:", rawText.slice(0, 200));
+    const choice = json.choices?.[0] as { message?: { content?: string; reasoning?: string }; finish_reason?: string } | undefined;
+    const message = choice?.message;
+    console.log("[AI insight] finish:", choice?.finish_reason, "content:", !!message?.content, "reasoning:", !!message?.reasoning);
+    const raw = message?.content ?? message?.reasoning ?? "";
+
+    // Extract quoted text from reasoning (the model embeds its answer in quotes)
+    const quoted = raw.match(/"([^"]{10,})"/);
+    const text = (quoted ? quoted[1] : raw).trim();
 
     if (!text) {
       console.log("[AI insight] empty response");
