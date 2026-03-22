@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "@grammyjs/auto-retry": "^2.0.2",
-    "@grammyjs/stream": "^1.0.1",
     "grammy": "^1.40.0"
   },
   "devDependencies": {

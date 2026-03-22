@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "aoede2bot",
+  "account_id": "4e7aa475715a25f32320a7a05bca0dac",
   "main": "src/index.ts",
   "compatibility_date": "2025-02-19",
   "compatibility_flags": [

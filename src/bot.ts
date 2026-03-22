@@ -1,6 +1,5 @@
 import { Bot } from "grammy";
 import { autoRetry } from "@grammyjs/auto-retry";
-import { stream } from "@grammyjs/stream";
 import { parseBotInfo } from "./config";
 import { buildHelpText } from "./formatters/help";
 import { createHandlePickModeCallback, createHandlePickPlayerCallback } from "./handlers/callbacks";
@@ -27,7 +26,6 @@ export function createBot(token: string, botInfo?: string, config: BotConfig = {
   });
 
   bot.api.config.use(autoRetry());
-  bot.use(stream());
 
   bot.catch(async (err) => {
     console.error("Bot error:", err.message);

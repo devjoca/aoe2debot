@@ -24,55 +24,33 @@ export function isAiConfigured(key: string | undefined, model: string | undefine
   return Boolean(key && model);
 }
 
-async function* openrouterStream(
+async function fetchInsight(
   messages: { role: string; content: string }[],
   key: string,
   model: string,
-): AsyncGenerator<string> {
+): Promise<string> {
+  console.log("[AI insight] fetching OpenRouter...");
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model, messages, stream: true }),
+    body: JSON.stringify({ model, messages, stream: false }),
   });
 
   if (!response.ok) {
     const body = await response.text().catch(() => "unknown");
-    console.error(`[AI insight] OpenRouter API error: ${response.status}`, body.slice(0, 300));
+    console.error(`[AI insight] OpenRouter API error: ${response.status}`, body.slice(0, 500));
     throw new Error(`OpenRouter API error: ${response.status}`);
   }
 
-  const body = response.body;
-  if (!body) return;
-
-  const reader = body.pipeThrough(new TextDecoderStream()).getReader();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += value;
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || !trimmed.startsWith("data: ")) continue;
-      const data = trimmed.slice(6);
-      if (data === "[DONE]") return;
-
-      try {
-        const parsed = JSON.parse(data);
-        const content = parsed.choices?.[0]?.delta?.content;
-        if (content) yield content;
-      } catch {
-        // skip malformed chunks
-      }
-    }
-  }
+  const json = (await response.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  const content = json.choices?.[0]?.message?.content ?? "";
+  console.log(`[AI insight] got response: ${content.length} chars`);
+  return content;
 }
 
 export async function sendInsight(
@@ -84,7 +62,7 @@ export async function sendInsight(
   if (!isAiConfigured(key, model)) return;
 
   const statsText = formattedText
-    .replace(/<[^>]+>/g, "") // strip HTML tags
+    .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
@@ -98,9 +76,31 @@ export async function sendInsight(
   ];
 
   try {
-    const stream = openrouterStream(messages, key, model);
-    await ctx.replyWithStream(stream);
+    await ctx.replyWithChatAction("typing");
+    const text = await fetchInsight(messages, key, model);
+    if (!text.trim()) {
+      console.log("[AI insight] empty response, skipping");
+      return;
+    }
+
+    // Try draft-style delivery (private chats)
+    const isPrivateChat = ctx.chat?.type === "private";
+    if (isPrivateChat) {
+      try {
+        await ctx.replyWithDraft(text);
+        console.log("[AI insight] sent via draft");
+        return;
+      } catch (draftError) {
+        console.log(
+          "[AI insight] draft failed, falling back to reply:",
+          draftError instanceof Error ? draftError.message : draftError,
+        );
+      }
+    }
+
+    await ctx.reply(text);
+    console.log("[AI insight] sent via reply");
   } catch (err) {
-    console.error("[AI insight] sendInsight error:", err);
+    console.error("[AI insight] error:", err instanceof Error ? err.message : err);
   }
 }
