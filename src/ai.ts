@@ -20,47 +20,11 @@ EJEMPLOS DE TONO:
 
 const MAX_STATS_LENGTH = 500;
 
-export function isAiConfigured(key: string | undefined, model: string | undefined): key is string {
-  return Boolean(key && model);
-}
-
-async function fetchInsight(
-  messages: { role: string; content: string }[],
-  key: string,
-  model: string,
-): Promise<string> {
-  console.log("[AI insight] fetching OpenRouter...");
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ model, messages, stream: false }),
-  });
-
-  if (!response.ok) {
-    const body = await response.text().catch(() => "unknown");
-    console.error(`[AI insight] OpenRouter API error: ${response.status}`, body.slice(0, 500));
-    throw new Error(`OpenRouter API error: ${response.status}`);
-  }
-
-  const json = (await response.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  const content = json.choices?.[0]?.message?.content ?? "";
-  console.log(`[AI insight] got response: ${content.length} chars`);
-  return content;
-}
-
 export async function sendInsight(
   ctx: BotContext,
   formattedText: string,
-  key: string,
-  model: string,
+  ai: Ai,
 ): Promise<void> {
-  if (!isAiConfigured(key, model)) return;
-
   const statsText = formattedText
     .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&")
@@ -70,36 +34,24 @@ export async function sendInsight(
     .replace(/\n{3,}/g, "\n\n")
     .slice(0, MAX_STATS_LENGTH);
 
-  const messages = [
-    { role: "system", content: SYSTEM_PROMPT },
-    { role: "user", content: statsText },
-  ];
-
   try {
-    await ctx.replyWithChatAction("typing");
-    const text = await fetchInsight(messages, key, model);
-    if (!text.trim()) {
-      console.log("[AI insight] empty response, skipping");
+    console.log("[AI insight] calling Workers AI...");
+    const response = await ai.run("@cf/meta/llama-3.1-8b-instruct" as keyof AiModels, {
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: statsText },
+      ],
+      stream: false,
+    });
+
+    const text = (response as { response?: string }).response?.trim();
+    if (!text) {
+      console.log("[AI insight] empty response");
       return;
     }
 
-    // Try draft-style delivery (private chats)
-    const isPrivateChat = ctx.chat?.type === "private";
-    if (isPrivateChat) {
-      try {
-        await ctx.replyWithDraft(text);
-        console.log("[AI insight] sent via draft");
-        return;
-      } catch (draftError) {
-        console.log(
-          "[AI insight] draft failed, falling back to reply:",
-          draftError instanceof Error ? draftError.message : draftError,
-        );
-      }
-    }
-
     await ctx.reply(text);
-    console.log("[AI insight] sent via reply");
+    console.log(`[AI insight] sent, ${text.length} chars`);
   } catch (err) {
     console.error("[AI insight] error:", err instanceof Error ? err.message : err);
   }

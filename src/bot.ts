@@ -12,8 +12,8 @@ import { parseMentionRequest } from "./telegram/parsers";
 import type { BotContext } from "./telegram/types";
 
 export interface BotConfig {
-  openrouterKey?: string;
-  openrouterModel?: string;
+  ai?: Ai;
+  waitUntil?: (p: Promise<unknown>) => void;
 }
 
 export function createBot(token: string, botInfo?: string, config: BotConfig = {}) {

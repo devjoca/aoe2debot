@@ -1,4 +1,4 @@
-import { sendInsight, isAiConfigured } from "../ai";
+import { sendInsight } from "../ai";
 import { decodeIntent, decodeMode } from "../telegram/callbacks";
 import { buildModeKeyboard } from "../telegram/keyboards";
 import { clampLastCount } from "../telegram/parsers";
@@ -9,8 +9,8 @@ import { respondWithLastResult } from "./last";
 import { respondWithTrendResult } from "./trend";
 
 export interface InsightConfig {
-  openrouterKey?: string;
-  openrouterModel?: string;
+  ai?: Ai;
+  waitUntil?: (p: Promise<unknown>) => void;
 }
 
 export function createHandlePickPlayerCallback(_config: InsightConfig) {
@@ -72,16 +72,18 @@ export function createHandlePickModeCallback(config: InsightConfig) {
       return;
     }
 
-    if (formattedText && isAiConfigured(config.openrouterKey, config.openrouterModel)) {
+    if (formattedText && config.ai) {
       console.log(`[AI insight] sending for profile ${profileId}, mode ${mode}`);
-      sendInsight(ctx, formattedText, config.openrouterKey!, config.openrouterModel!).catch((err) => {
+      const insightPromise = sendInsight(ctx, formattedText, config.ai).catch((err) => {
         console.error("[AI insight] failed:", err);
       });
+      if (config.waitUntil) {
+        config.waitUntil(insightPromise);
+      }
     } else {
       console.log("[AI insight] skipped —", {
         hasText: Boolean(formattedText),
-        hasKey: Boolean(config.openrouterKey),
-        hasModel: Boolean(config.openrouterModel),
+        hasAi: Boolean(config.ai),
       });
     }
   };
