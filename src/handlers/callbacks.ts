@@ -73,7 +73,16 @@ export function createHandlePickModeCallback(config: InsightConfig) {
     }
 
     if (formattedText && isAiConfigured(config.openrouterKey, config.openrouterModel)) {
-      sendInsight(ctx, formattedText, config.openrouterKey!, config.openrouterModel!).catch(() => {});
+      console.log(`[AI insight] sending for profile ${profileId}, mode ${mode}`);
+      sendInsight(ctx, formattedText, config.openrouterKey!, config.openrouterModel!).catch((err) => {
+        console.error("[AI insight] failed:", err);
+      });
+    } else {
+      console.log("[AI insight] skipped —", {
+        hasText: Boolean(formattedText),
+        hasKey: Boolean(config.openrouterKey),
+        hasModel: Boolean(config.openrouterModel),
+      });
     }
   };
 }

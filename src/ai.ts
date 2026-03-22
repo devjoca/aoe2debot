@@ -39,6 +39,8 @@ async function* openrouterStream(
   });
 
   if (!response.ok) {
+    const body = await response.text().catch(() => "unknown");
+    console.error(`[AI insight] OpenRouter API error: ${response.status}`, body.slice(0, 300));
     throw new Error(`OpenRouter API error: ${response.status}`);
   }
 
@@ -98,7 +100,7 @@ export async function sendInsight(
   try {
     const stream = openrouterStream(messages, key, model);
     await ctx.replyWithStream(stream);
-  } catch {
-    // silently skip — user already has their main response
+  } catch (err) {
+    console.error("[AI insight] sendInsight error:", err);
   }
 }
