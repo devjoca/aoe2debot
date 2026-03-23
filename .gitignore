@@ -3,4 +3,4 @@ dist/
 .env
 .dev.vars
 .wrangler/
-.env
+worker-configuration.d.ts

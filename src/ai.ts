@@ -26,15 +26,9 @@ EJEMPLOS DE TONO:
 - "60% de victorias con los Mongoles... ya pues, deja algo para los demás, que no todos nacieron en la estepa."`;
 
 const MAX_STATS_LENGTH = 500;
-const FETCH_TIMEOUT_MS = 15_000;
 
-export async function sendInsight(
-  ctx: BotContext,
-  formattedText: string,
-  key: string,
-  model: string,
-): Promise<void> {
-  const statsText = formattedText
+function stripHtml(html: string): string {
+  return html
     .replace(/<[^>]+>/g, "")
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -42,10 +36,17 @@ export async function sendInsight(
     .replace(/&quot;/g, '"')
     .replace(/\n{3,}/g, "\n\n")
     .slice(0, MAX_STATS_LENGTH);
+}
+
+export async function sendInsight(
+  ctx: BotContext,
+  formattedText: string,
+  key: string,
+  model: string,
+): Promise<void> {
+  const statsText = stripHtml(formattedText);
 
   try {
-    console.log("[AI insight] fetching OpenRouter...");
-
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -67,40 +68,33 @@ export async function sendInsight(
 
     if (!response.ok) {
       const body = await response.text().catch(() => "unknown");
-      console.error(`[AI insight] OpenRouter error ${response.status}:`, body.slice(0, 300));
+      console.error("[AI insight] OpenRouter error:", response.status, body.slice(0, 200));
       return;
     }
 
     const rawText = await response.text();
-    if (!rawText) {
-      console.error("[AI insight] empty response body");
-      return;
-    }
+    if (!rawText) return;
 
     let json: { choices?: { message?: { content?: string } }[] };
     try {
       json = JSON.parse(rawText);
     } catch {
-      console.error("[AI insight] invalid JSON:", rawText.slice(0, 300));
+      console.error("[AI insight] invalid JSON:", rawText.slice(0, 200));
       return;
     }
-    console.log("[AI insight] raw response:", rawText.slice(0, 200));
-    const choice = json.choices?.[0] as { message?: { content?: string; reasoning?: string }; finish_reason?: string } | undefined;
-    const message = choice?.message;
-    console.log("[AI insight] finish:", choice?.finish_reason, "content:", !!message?.content, "reasoning:", !!message?.reasoning);
-    const raw = message?.content ?? message?.reasoning ?? "";
 
-    // Extract quoted text from reasoning (the model embeds its answer in quotes)
+    const choice = json.choices?.[0] as {
+      message?: { content?: string; reasoning?: string };
+    } | undefined;
+    const raw = choice?.message?.content ?? choice?.message?.reasoning ?? "";
+
+    // Nemotron puts the answer in quotes inside the reasoning field
     const quoted = raw.match(/"([^"]{10,})"/);
     const text = (quoted ? quoted[1] : raw).trim();
 
-    if (!text) {
-      console.log("[AI insight] empty response");
-      return;
+    if (text) {
+      await ctx.reply(text);
     }
-
-    await ctx.reply(text);
-    console.log(`[AI insight] sent, ${text.length} chars`);
   } catch (err) {
     console.error("[AI insight] error:", err instanceof Error ? err.message : err);
   }
