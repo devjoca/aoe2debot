@@ -1,3 +1,5 @@
+import { createOpenAI } from "@ai-sdk/openai";
+import { generateText } from "ai";
 import type { BotContext } from "./telegram/types";
 
 const SYSTEM_PROMPT = `Eres un observador cómico peruano (específicamente de Lima, con vibra milenial). Tu función es comentar partidas de Age of Empires con un humor inteligente, agudo y "con calle". No eres un analista serio ni un tutor; eres el pata que está viendo la partida contigo en un bar y suelta comentarios que dan risa por lo precisos y sarcásticos que son.
@@ -34,6 +36,9 @@ EJEMPLOS DE TONO:
 
 const MAX_STATS_LENGTH = 500;
 
+const SYSTEM_BLOCK_RE =
+  /<(system-reminder|system|thinking|assistant|instructions|rules|context)>[\s\S]*?<\/\1>/gi;
+
 function stripHtml(html: string): string {
   return html
     .replace(/<[^>]+>/g, "")
@@ -45,6 +50,13 @@ function stripHtml(html: string): string {
     .slice(0, MAX_STATS_LENGTH);
 }
 
+function cleanResponse(text: string): string {
+  return text
+    .replace(SYSTEM_BLOCK_RE, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export async function sendInsight(
   ctx: BotContext,
   formattedText: string,
@@ -53,52 +65,22 @@ export async function sendInsight(
 ): Promise<void> {
   const statsText = stripHtml(formattedText);
 
+  const openai = createOpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: key,
+  });
+
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${key}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://aoede2bot.jpereyraleon.workers.dev",
-        "X-Title": "aoede2bot",
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: statsText },
-        ],
-        max_tokens: 1000,
-        stream: false,
-      }),
+    const result = await generateText({
+      model: openai(model),
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: statsText },
+      ],
+      maxOutputTokens: 200,
     });
 
-    if (!response.ok) {
-      const body = await response.text().catch(() => "unknown");
-      console.error("[AI insight] OpenRouter error:", response.status, body.slice(0, 200));
-      return;
-    }
-
-    const rawText = await response.text();
-    if (!rawText) return;
-
-    let json: { choices?: { message?: { content?: string } }[] };
-    try {
-      json = JSON.parse(rawText);
-    } catch {
-      console.error("[AI insight] invalid JSON:", rawText.slice(0, 200));
-      return;
-    }
-
-    const choice = json.choices?.[0] as {
-      message?: { content?: string; reasoning?: string };
-    } | undefined;
-    const raw = choice?.message?.content ?? choice?.message?.reasoning ?? "";
-
-    // Nemotron puts the answer in quotes inside the reasoning field
-    const quoted = raw.match(/"([^"]{10,})"/);
-    const text = (quoted ? quoted[1] : raw).trim();
-
+    const text = cleanResponse(result.text);
     if (text) {
       await ctx.reply(text);
     }
