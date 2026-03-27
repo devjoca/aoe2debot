@@ -15,6 +15,11 @@ export default {
       return new Response("OK", { status: 200 });
     }
 
+    if (request.method !== "POST") {
+      console.log(`[bot] ignored ${request.method} ${url.pathname}`);
+      return new Response("Method Not Allowed", { status: 405 });
+    }
+
     const bot = createBot(env.BOT_TOKEN, env.BOT_INFO, {
       openrouterKey: env.OPENROUTER_KEY,
       openrouterModel: env.OPENROUTER_MODEL,

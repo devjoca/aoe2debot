@@ -77,7 +77,12 @@ export async function sendInsight(
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: statsText },
       ],
-      maxOutputTokens: 200,
+      maxOutputTokens: 4000,
+      providerOptions: {
+        openrouter: {
+          reasoning: { max_tokens: 0 },
+        },
+      },
     });
 
     const text = cleanResponse(result.text);
@@ -85,6 +90,12 @@ export async function sendInsight(
       await ctx.reply(text);
     }
   } catch (err) {
-    console.error("[AI insight] error:", err instanceof Error ? err.message : err);
+    if (err instanceof Error) {
+      console.error("[AI insight] error name:", err.name);
+      console.error("[AI insight] error message:", err.message);
+      console.error("[AI insight] error stack:", err.stack?.split("\n").slice(0, 5).join("\n"));
+    } else {
+      console.error("[AI insight] unknown error:", err);
+    }
   }
 }
